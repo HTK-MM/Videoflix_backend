@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Confirm your email</title>
+
+</head>
+
+<body style="font-family: Roboto; size: 16px; font-weight: 400;">
+  <div style="display:flex; flex-direction: column; padding: 10px; gap: 10px; ">
+    <img src="cid:logo_videoflix" alt="Logo" style="display:flex; align-self: center; width: 250px;" >
+    <p>Dear {{ mail }}, <br>Thank you for registering with Videoflix. To complete your registration and verify your
+      email address, please
+      click the link below:</p>
+
+    <p>
+      <a href="{{ activation_link }}" target="_blank"
+        style=" display: inline-block; padding: 12px 24px; background-color: #2E3EDF; color: white; text-decoration: none; border-radius: 40px; gap: 10px; font-weight: 700;">
+        Activate Account
+      </a>
+    </p>
+    <p>
+      If you did not create an account with us, please disregard this email.<br><br>
+      Best regards,<br><br>Your Videoflix Team
+    </p>
+  </div>
+</body>
+
+</html>

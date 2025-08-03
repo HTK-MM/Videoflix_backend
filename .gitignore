@@ -1,0 +1,47 @@
+# 🔹 Python
+*.pyc
+*.pyo
+__pycache__/
+*.swp
+*.swo
+
+# 🔹 Virtuelle Umgebung  (venv, env)
+venv/
+env/
+*.venv/
+
+# 🔹 Konfigurationsdateien
+.env
+*.sqlite3
+db.sqlite3
+instance/
+config.json
+
+# 🔹 Django-Migrationen (vermeidet Zwischenspeicherdateien von Migrationen)
+*/migrations/*.py
+*/migrations/*.pyc
+
+# 🔹 Protokoll- und Cache-Dateien
+*.log
+*.pot
+*.mo
+*.cache
+*.pid
+*.seed
+*.cover
+*.DS_Store
+*.sass-cache
+*.pytest_cache/
+__pycache__/
+
+# 🔹 Statische und kompilierte Dateien
+staticfiles/
+media/
+node_modules/
+dist/
+build/
+
+# 🔹 IDEs und Editoren
+.vscode/
+.idea/
+*.iml

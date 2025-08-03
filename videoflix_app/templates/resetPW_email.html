@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Reset your Password</title>
+
+</head>
+
+<body style="font-family: Roboto; size: 16px; font-weight: 400;">
+  <div style="display:flex; flex-direction: column; padding: 10px; gap: 10px; ">    
+    <p>Hello, <br>We recently received a request to reset your password. If you made this request, please click on the following link to reset your password:</p>
+
+    <p>
+      <a href="{{ resetPW_link }}" target="_blank"
+        style=" display: inline-block; padding: 12px 24px; background-color: #2E3EDF; color: white; text-decoration: none; border-radius: 40px; gap: 10px; font-weight: 700;">
+        Reset password
+      </a>
+    </p>
+    <p>
+     Please note that for security reasons, this link is only valid for 24 hours.<br><br>
+      If you did not request a password reset, please ignore this email.<br><br>
+      Best regards,<br><br>Your Videoflix Team
+    </p>
+    <img src="cid:logo_videoflix" alt="Logo" style="display:flex; align-self: flex-start; width: 250px;" >
+  </div>
+</body>
+
+</html>

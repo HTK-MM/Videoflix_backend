@@ -1,0 +1,192 @@
+# Videoflix Backend API
+
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/HTK-MM/Videoflix_backend/blob/master/README.MD) [![de](https://img.shields.io/badge/lang-de-yellow.svg)](https://github.com/HTK-MM/Videoflix_backend/blob/master/README.de.md)
+
+## Description
+
+Videoflix Backend is an API of a video streaming app, built with Django and Django REST Framework. It provides APIs for user accounts, video upload, categories, watchlists, and more.
+
+## Main Features
+
+- User registration, login, and password reset  
+- JWT authentication using HTTP-only cookies  
+- Upload videos and generate thumbnails automatically  
+- Convert videos to different resolutions with Celery and FFmpeg  
+- Generate HLS streams for smooth playback  
+- Create and list video categories  
+- Save videos to a personal watchlist  
+- Track watch history for each user  
+- Runs with Docker and PostgreSQL  
+
+## Technologies Used
+
+- **Python 3.x** – Programming language
+- **Django 5.2.3** – Web framework
+- **Django REST Framework 3.16.0** – API development
+- **SimpleJWT** – JWT-based authentication with cookies
+- **Redis + django-rq** – Background tasks with job queues
+- **FFmpeg + ffmpeg-python** – Video processing
+- **PostgreSQL** – Production database
+- **Gunicorn** – WSGI server for deployment
+- **Whitenoise** – Serve static files in production
+- **Docker** – Containerization and environment management
+
+## Installation
+
+### Manual Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/HTK-MM/VideoflixBackend/.git
+    cd projekt
+   ```
+
+2. Create and activate a virtual environment:
+    ````bash    
+    python -m venv venv
+       source venv/bin/activate  #On Windows: venv\Scripts\activate
+    ````
+
+3. Install dependencies:
+    ````bash 
+    pip install -r requirements.txt
+    ````
+
+4. Configure the database and apply migrations:
+    ````bash 
+    python manage.py migrate
+    ````
+
+5. Create a superuser (optional for accessing the admin panel):
+    ````bash 
+    python manage.py createsuperuser
+    ````
+
+6. Start the development server:
+    ````bash 
+    python manage.py runserver
+    ````
+
+### Docker Setup
+
+You can run the backend using Docker instead of installing everything manually.
+
+1. Make sure you have Docker and Docker Compose installed.
+   
+2. Start the containers:
+    ````bash   
+    docker compose up --build
+    ````
+
+3. Access the API at: http://localhost:8000
+   
+4. Create a superuser inside the container (only once):
+   ````bash   
+    docker-compose exec web python manage.py createsuperuser
+    ```` 
+
+5. Configure the database and apply migrations:
+    ````bash 
+    docker-compose exec web python manage.py migrate
+    ````
+
+6. Stopt de containers:
+    ````bash   
+    docker-compose down
+    ````
+
+## Environment Variables
+
+The project requires several environment variables to be set for proper configuration.  
+
+An example file `.env.template` is included in the repository with all the necessary keys and placeholder values.
+
+To set up your environment variables, create a `.env` file based on the template and update the values:
+
+    ````bash   
+    cp .env.template .env
+    # Then edit the .env file with your actual configuration values (database credentials, secret keys, email settings, etc.)
+    ````
+
+## API Base Path
+
+All API endpoints are prefixed with `/api/`.  
+Example:  
+- `GET /api/video/` – Returns a list of all videos.
+- `POST /api/login/` – Authenticates a user and returns a JWT.
+
+The full Django `urlpatterns` configuration includes:
+
+    ```python
+urlpatterns = [
+    path('admin/', admin.site.urls),                  # Admin interface
+    path('api/', include('videoflix_app.api.urls')),  # Main API
+    path('django-rq/', include('django_rq.urls')),    # Task queue monitoring
+]
+    ```
+
+## API Endpoints
+
+The Videoflix API provides the following endpoints:
+
+### :small_blue_diamond: Authentication & Users
+
+-   ````**POST /register/**```` - Register a new user. 
+-   ````**GET /activate/<uidb64>/<token>/**```` - Account activation via token (email).
+-   ````**POST /login/**```` -  Log in with JWT (stored in cookie).
+-   ````**POST /token/refresh/**```` -  Refresh the JWT token. 
+-   ````**POST /logout/**```` -  Log out and clear authentication cookies. 
+-   ````**GET /users/check-login-register/**```` - Check if the user needs to register or log in.
+-   ````**POST /password_reset/**```` -  Request a password reset via email.
+-   ````**POST /password_confirm/<uidb64>/<token>/**```` -  Confirm password reset. 
+-   ````**`GET` | `PUT` | `DELETE` /user/**```` -  Manage the authenticated user profile.
+  
+### :small_blue_diamond: Categories
+-   ````**GET /categories/**```` - List all available video categories. 
+-   ````**POST /categories/**```` - Create a new category.   
+
+### :small_blue_diamond: Videos
+
+-   ````**GET /video/**```` - Retrieve a list of all videos. 
+-   ````**GET /video/<id>/**```` - Get details of a specific video.
+-   ````**GET /video/<movie_id>/<resolution>/index.m3u8**```` - Get the HLS manifest for the video.
+-   ````**GET /video/<movie_id>/<resolution>/<segment>/**```` - Get a specific HLS video segment.
+
+### :small_blue_diamond: Watchlist
+
+-   ````**`GET` | `POST` /watchlist/**```` - Access or modify the user's watchlist.
+-   ````**`GET` | `DELETE` /watchlist-entries/**```` - Manage individual entries in the watchlist.
+   
+## Testing
+   
+### Running test locally
+1. Before running tests locally, make sure your virtual environment is activated and dependencies are installed:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    pip install -r requirements.txt
+    ````
+2. Then, apply migrations and the run automated tests
+    ````bash   
+    python manage.py migrate
+    python manage.py test
+    ````
+
+### Running tests with Docker
+1. Make sure your containers are running:
+    ````bash   
+    docker-compose up 
+    ````    
+2. Apply migrations inside the container (only needed if not done yet):
+   ````bash   
+    docker-compose exec web python manage.py migrate
+    ````    
+3. To run test inside the Docker container, use:
+    ````bash   
+    docker-compose exec web python manage.py test
+    ````    
+4. When finished, you can stop the containers:
+    ````bash   
+    docker-compose down
+    ````   
+
