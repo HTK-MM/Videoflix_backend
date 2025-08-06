@@ -17,10 +17,6 @@ db.sqlite3
 instance/
 config.json
 
-# 🔹 Django-Migrationen (vermeidet Zwischenspeicherdateien von Migrationen)
-*/migrations/*.py
-*/migrations/*.pyc
-
 # 🔹 Protokoll- und Cache-Dateien
 *.log
 *.pot
