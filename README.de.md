@@ -73,6 +73,13 @@ Dieses Projekt verwendet Docker. Folge diesen Schritten, um alles lokal zum Lauf
     docker-compose down
     ````
 
+## Zugriff auf das Admin-Panel
+
+Nur Benutzer mit `is_staff=True` können auf das Django-Admin-Panel zugreifen.  
+Superuser (`is_superuser=True`) haben uneingeschränkten Zugriff.  
+Modelle wie `Watchlist`, `WatchlistEntry` und `WatchHistory` sind nur für Superuser sichtbar, um die Privatsphäre der Benutzer zu schützen.
+
+
 ## API Basis-Pfad
 
 Alle API-Endpunkte haben den Präfix `/api/`.  
@@ -123,20 +130,7 @@ Die Videoflix API bietet folgende Endpunkte:
 -   ````**`GET` | `DELETE` /watchlist-entries/**```` - Einzelne Watchlist-Einträge verwalten.
    
 ## Tests
-   
-### Tests lokal ausführen
-1. Virtuelle Umgebung aktivieren und Abhängigkeiten installieren:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
-    pip install -r requirements.txt
-    ````
-2. Migrationen anwenden und Tests starten:
-    ````bash   
-    python manage.py migrate
-    python manage.py test
-    ````
-
+ 
 ### Tests mit Docker ausführen
 1. Container starten:
     ````bash   
