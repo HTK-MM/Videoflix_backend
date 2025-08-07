@@ -33,80 +33,44 @@ Videoflix Backend is an API of a video streaming app, built with Django and Djan
 
 ## Installation
 
-### Manual Setup
+This project uses Docker. Follow these steps to get everything running locally:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/HTK-MM/VideoflixBackend/.git
-    cd projekt
+   git clone https://github.com/HTK-MM/Videoflix_backend/.git
+   cd Videoflix_backend
    ```
 
-2. Create and activate a virtual environment:
-    ````bash    
-    python -m venv venv
-       source venv/bin/activate  #On Windows: venv\Scripts\activate
-    ````
-
-3. Install dependencies:
-    ````bash 
-    pip install -r requirements.txt
-    ````
-
-4. Configure the database and apply migrations:
-    ````bash 
-    python manage.py migrate
-    ````
-
-5. Create a superuser (optional for accessing the admin panel):
-    ````bash 
-    python manage.py createsuperuser
-    ````
-
-6. Start the development server:
-    ````bash 
-    python manage.py runserver
-    ````
-
-### Docker Setup
-
-You can run the backend using Docker instead of installing everything manually.
-
-1. Make sure you have Docker and Docker Compose installed.
    
-2. Start the containers:
+2. The project requires several environment variables to be set for proper configuration. An example file `.env.template` is included in the repository with all the necessary keys and placeholder values.
+   To set up your environment variables, create a `.env` file based on the template and configure it with your own values:
     ````bash   
-    docker compose up --build
+    cp .env.template .env
+    # Then edit the .env file with your actual configuration values (database CREDENTIALS, SECRET_KEY, DATABASE_URL, EMAIL_* settings, etc.)
     ````
 
-3. Access the API at: http://localhost:8000
+3. Start the containers:
+    ````bash   
+    docker-compose up --build
+    ````
+
+4. Access the API at: http://localhost:8000
    
-4. Create a superuser inside the container (only once):
+5. Create a superuser inside the container (only once):
    ````bash   
     docker-compose exec web python manage.py createsuperuser
     ```` 
 
-5. Configure the database and apply migrations:
+6. Configure the database and apply migrations:
     ````bash 
     docker-compose exec web python manage.py migrate
     ````
 
-6. Stopt de containers:
+7.  Stopt the containers:
     ````bash   
     docker-compose down
     ````
 
-## Environment Variables
-
-The project requires several environment variables to be set for proper configuration.  
-
-An example file `.env.template` is included in the repository with all the necessary keys and placeholder values.
-
-To set up your environment variables, create a `.env` file based on the template and update the values:
-
-    ````bash   
-    cp .env.template .env
-    # Then edit the .env file with your actual configuration values (database credentials, secret keys, email settings, etc.)
-    ````
 
 ## API Base Path
 

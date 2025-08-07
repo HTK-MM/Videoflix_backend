@@ -34,79 +34,43 @@ Videoflix Backend ist die API einer Video-Streaming-App, entwickelt mit Django u
 
 ## Installation
 
-### Manuelle Installation
+Dieses Projekt verwendet Docker. Folge diesen Schritten, um alles lokal zum Laufen zu bringen:
+
 
 1. Klonen Sie das Repository:
    ```bash
-   git clone https://github.com/HTK-MM/VideoflixBackend/.git
-    cd projekt
+   git clone https://github.com/HTK-MM/Videoflix_backend/.git
+   cd Videoflix_backend
    ```
 
-2. Erstellen und aktivieren Sie eine virtuelle Umgebung:
-    ````bash    
-    python -m venv venv
-       source venv/bin/activate  #On Windows: venv\Scripts\activate
-    ````
-
-3. Installieren Sie die Abhängigkeiten:
-    ````bash 
-    pip install -r requirements.txt
-    ````
-
-4. Konfigurieren Sie die Datenbank und führen Sie Migrationen durch:
-    ````bash 
-    python manage.py migrate
-    ````
-
-5. Erstellen Sie einen Superuser (optional für den Zugriff auf das Admin-Panel):
-    ````bash 
-    python manage.py createsuperuser
-    ````
-
-6. Starten Sie den Entwicklungsserver:
-    ````bash 
-    python manage.py runserver
-    ````
-
-### Docker Setup
-
-Alternativ kann das Backend auch mit Docker betrieben werden.
-
-1. Stelle sicher, dass Docker und Docker Compose installiert sind.
-   
-2. Container starten:
+2. Das Projekt benötigt einige Umgebungsvariablen zur korrekten Konfiguration.
+   Eine Beispiel-Datei .env.template ist im Repository enthalten und enthält alle nötigen Schlüssel mit Platzhalterwerten.
+   Erstelle eine .env-Datei basierend auf der Vorlage und passe sie mit deinen eigenen Werten an:
     ````bash   
-    docker compose up --build
+    cp .env.template .env
+    # Then edit the .env file with your actual configuration values (database CREDENTIALS, SECRET_KEY, DATABASE_URL, EMAIL_* settings, etc.)
+    ````
+   
+3. Container starten:
+    ````bash   
+    docker-compose up --build
     ````
 
-3. API unter http://localhost:8000 aufrufen
+4. API unter http://localhost:8000 aufrufen
    
-4. Einmalig Superuser im Container anlegen:
+5. Einmalig Superuser im Container anlegen:
    ````bash   
     docker-compose exec web python manage.py createsuperuser
     ```` 
 
-5. Datenbank migrieren:
+6. Datenbank migrieren:
     ````bash 
     docker-compose exec web python manage.py migrate
     ````
 
-6. Container stoppen:
+7. Container stoppen:
     ````bash   
     docker-compose down
-    ````
-
-## Environment Variables
-
-Für die korrekte Konfiguration müssen mehrere Environment-Variablen gesetzt werden.
-
-Eine Beispieldatei  `.env.template` ist im Repository enthalten, mit allen nötigen Schlüsseln und Platzhalterwerten.
-
-Zur Einrichtung kopiere die Datei  `.env.template` in `.env` und passe die Werte an:
-
-    ````bash   
-    cp .env.template .env
-    # Danach die Datei .env mit den echten Werten bearbeiten (Datenbank, Secrets, Email, etc.)
     ````
 
 ## API Basis-Pfad
@@ -119,11 +83,11 @@ Beispiele:
 Die Django URL-Konfiguration `urlpatterns` umfasst:
 
     ```python
-urlpatterns = [
-    path('admin/', admin.site.urls),                  # Admin interface
-    path('api/', include('videoflix_app.api.urls')),  # Haupt API
-    path('django-rq/', include('django_rq.urls')),    # Überwachung der Task-Queues
-]
+    urlpatterns = [
+        path('admin/', admin.site.urls),                  # Admin interface
+        path('api/', include('videoflix_app.api.urls')),  # Haupt API
+        path('django-rq/', include('django_rq.urls')),    # Überwachung der Task-Queues
+    ]
     ```
 
 ## API Endpunkte
