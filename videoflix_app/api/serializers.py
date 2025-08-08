@@ -88,7 +88,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
 class PasswordResetConfirmSerializer(serializers.Serializer):   
     new_password = serializers.CharField()
-    repeat_password = serializers.CharField()
+    confirm_password  = serializers.CharField()
 
     def validate(self, data):        
         uidb64 = self.context.get('uidb64')
@@ -96,7 +96,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if not uidb64 or not token:
             raise serializers.ValidationError("Missing uid or token")
         
-        if data['new_password'] != data['repeat_password']:
+        if data['new_password'] != data['confirm_password']:
             raise serializers.ValidationError("Passwords do not match")
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))

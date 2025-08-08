@@ -18,7 +18,7 @@ token_generator = PasswordResetTokenGenerator()
 def build_activation_email_content(user):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-    link = f"{settings.FRONTEND_URL}/activate/{uid}/{token}/"
+    link = f"{settings.FRONTEND_URL}/pages/auth/activate.html?uid={uid}&token={token}"
     context = {'mail': user.username, 'activation_link': link}
     return get_template('email.html').render(context)
 
@@ -50,7 +50,7 @@ def send_resetPW_email_task(user_id):
     user = User.objects.get(pk=user_id)
     token = token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
-    link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
+    link = f"{settings.FRONTEND_URL}/pages/auth/confirm_password.html?uid={uid}&token={token}"
     context = {'mail': user.username, 'resetPW_link': link}
     content = get_template('resetPW_email.html').render(context)
     email_obj = EmailMultiAlternatives(
@@ -129,7 +129,7 @@ def generate_hls(video_path, output_folder, resolution="480"):
     os.makedirs(output_folder, exist_ok=True)
     width, height = get_resolution_size(resolution)  
     duration = get_video_duration(video_path)
-    hls_time = 2 if duration <= 10 else 10  
+    hls_time = 4 if duration <= 10 else 6  
     output_path = os.path.join(output_folder, 'index.m3u8')
     try:
         (ffmpeg
@@ -148,8 +148,7 @@ def generate_hls(video_path, output_folder, resolution="480"):
                 crf=20            
             )
             .overwrite_output()
-            .run(capture_stdout=True, capture_stderr=True)    )
-        print("HLS generado con audio correctamente.")
+            .run(capture_stdout=True, capture_stderr=True)    )        
     except ffmpeg.Error as e:
-        print(f"Error generando HLS: {e.stderr.decode()}")
+        print(f"Error during generating HLS: {e.stderr.decode()}")
     return output_path

@@ -116,8 +116,7 @@ CACHES = {
 
 RQ_QUEUES = {
     'default': {
-        'HOST': os.environ.get("REDIS_HOST", default="redis"),
-        
+        'HOST': os.environ.get("REDIS_HOST", default="redis"),        
         'PORT': os.environ.get("REDIS_PORT", default=6379),
         'DB': os.environ.get("REDIS_DB", default=0),
         'DEFAULT_TIMEOUT': 900,
@@ -186,6 +185,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:4200")
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
         'videoflix_app.api.authentication.CookieJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (

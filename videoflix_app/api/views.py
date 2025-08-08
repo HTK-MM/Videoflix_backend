@@ -5,11 +5,14 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django_rq import get_queue
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status,viewsets,permissions
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -21,13 +24,13 @@ from .serializers import CustomUserSerializer, MyTokenObtainPairSerializer, Pass
 from .serializers import  CategorySerializer, VideoSerializer, VideoListSerializer, WatchHistorySerializer, WatchlistSerializer, WatchlistEntrySerializer
 from videoflix_app.models import CustomUser, Category, Video, WatchHistory, Watchlist, WatchlistEntry    
 from .permissions import IsAdminOrReadOnly, IsOwnerProfile
-import traceback
+
 
 User = get_user_model()
 
 class CustomUserView(viewsets.ModelViewSet):    
     serializer_class = CustomUserSerializer
-    authentication_classes = [CookieJWTAuthentication]
+    authentication_classes = [CookieJWTAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated, IsOwnerProfile]
     
     def get_queryset(self):
@@ -71,12 +74,12 @@ class RegistrationView(APIView):
 
 class ActivateUserView(APIView):
     permission_classes = [AllowAny]
-    def get(self, request, uidb64=None, token=None):
-        print(f"ActivateUserView GET called with uidb64={uidb64} and token={token}")
+    def get(self, request, uidb64=None, token=None):              
         if not uidb64 or not token:
             return Response({'error': 'UID and token are required'}, status=status.HTTP_400_BAD_REQUEST)
-        return self.activate_user(uidb64, token)    
-    
+        response = self.activate_user(uidb64, token)               
+        return response
+        
     def post(self, request, uidb64=None, token=None ):
         uidb64 = request.data.get('uid') or uidb64
         token = request.data.get('token') or token     
@@ -92,17 +95,20 @@ class ActivateUserView(APIView):
             return Response({'error': 'Invalid UID'}, status=status.HTTP_400_BAD_REQUEST)
         
         if default_token_generator.check_token(user, token):
+            if user.is_active:
+                return Response({'message': 'Account already activated.'}, status=status.HTTP_200_OK)
             user.is_active = True
-            user.save()
+            user.save()           
             return Response({'message': 'Account successfully activated.'}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid or expired token'}, status=status.HTTP_400_BAD_REQUEST)
         
 
-    
+@method_decorator(ensure_csrf_cookie, name='dispatch')   
 class CookieTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
-    serializer_class = MyTokenObtainPairSerializer      
+    serializer_class = MyTokenObtainPairSerializer  
+        
     def post(self, request, *args, **kwargs):       
         response = super().post(request, *args, **kwargs)
         refresh = response.data.get("refresh")
@@ -114,7 +120,8 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             value = access,
             httponly=True,
             samesite="Lax",            
-            secure=is_secure,      
+            secure=is_secure,
+            path="/",     
             )
         
         response.set_cookie(
@@ -122,7 +129,8 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             value = refresh,
             httponly=True,
             samesite="Lax",             
-            secure=is_secure,                
+            secure=is_secure,    
+            path="/",            
             )
             
         serializer = self.get_serializer(data=request.data)
@@ -150,10 +158,12 @@ class CookieTokenRefreshView(TokenRefreshView):
             value = access_token,
             httponly=True,
             secure=is_secure,
-            samesite="Lax"
+            samesite="Lax",
+            path="/",    
         )
         return response
-
+    
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 class LogoutView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
@@ -172,7 +182,6 @@ class LogoutView(APIView):
             status=status.HTTP_200_OK )
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
-
         return response
 
 class CheckLoginOrRegisterView(APIView):
@@ -205,13 +214,15 @@ class PasswordResetRequestView(APIView):
             
 class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
-    serializer_class = PasswordResetConfirmSerializer
-
+    serializer_class = PasswordResetConfirmSerializer    
+            
     def post(self, request, uidb64, token):
         serializer = self.serializer_class(data=request.data,context={'uidb64': uidb64, 'token': token})          
         if serializer.is_valid():
             serializer.save()
             return Response({"detail": "Your Password has been successfully reset."}, status=status.HTTP_200_OK)
+        else:
+            print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
   
   
@@ -246,7 +257,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    authentication_classes = [CookieJWTAuthentication]
+    authentication_classes = [CookieJWTAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
     parser_classes = (MultiPartParser, FormParser)
     
@@ -284,7 +295,7 @@ class VideoViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-@authentication_classes([CookieJWTAuthentication])
+@authentication_classes([CookieJWTAuthentication, SessionAuthentication])
 def serve_hls_manifest(request, movie_id, resolution):
     file_path = os.path.join(settings.MEDIA_ROOT, 'videos', str(movie_id), resolution, 'index.m3u8')
     if not os.path.exists(file_path):
@@ -293,7 +304,7 @@ def serve_hls_manifest(request, movie_id, resolution):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-@authentication_classes([CookieJWTAuthentication])
+@authentication_classes([CookieJWTAuthentication, SessionAuthentication])
 def serve_hls_segment(request, movie_id, resolution, segment):
     file_path = os.path.join(settings.MEDIA_ROOT,'videos', str(movie_id), resolution, segment)
     if not os.path.exists(file_path):
@@ -303,7 +314,7 @@ def serve_hls_segment(request, movie_id, resolution, segment):
     
 class WatchlistViewSet(viewsets.ModelViewSet):
     serializer_class = WatchlistSerializer
-    authentication_classes = [CookieJWTAuthentication]
+    authentication_classes = [CookieJWTAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated, IsOwnerProfile]
 
     def get_queryset(self):     
@@ -314,7 +325,7 @@ class WatchlistViewSet(viewsets.ModelViewSet):
 
 class WatchlistEntryViewSet(viewsets.ModelViewSet):
     serializer_class = WatchlistEntrySerializer
-    authentication_classes = [CookieJWTAuthentication]
+    authentication_classes = [CookieJWTAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated, IsOwnerProfile]
 
     def get_queryset(self):       
@@ -342,7 +353,7 @@ class WatchlistEntryViewSet(viewsets.ModelViewSet):
 
 class WatchHistoryViewSet(viewsets.ModelViewSet):    
     serializer_class = WatchHistorySerializer
-    authentication_classes = [CookieJWTAuthentication]
+    authentication_classes = [CookieJWTAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated, IsOwnerProfile]
 
     def get_queryset(self):       
