@@ -39,15 +39,16 @@ Diese Dokumentation wurde aus den im Quellcode vorhandenen **Docstrings** erstel
 Sie eignet sich besonders für Entwickler, die das interne Verhalten des Codes verstehen und eine präzise Referenz darüber haben möchten, was jeder Teil der Anwendung macht.
 
 **Beispiel:**
-    ```python
+    ````python
     def video_post_save(sender, instance, created, **kwargs):
-         """
+        """
         Signal receiver that is called after a Video instance is saved.
         If the Video instance is newly created, it performs tasks such as:
-        - Converting the video file to different resolutions.
-        - Generating a thumbnail.
-        - Creating HLS streams.
+      - Converting the video file to different resolutions.
+      - Generating a thumbnail.
+      - Creating HLS streams.
         """
+    ````
 
 ## Installation
 
@@ -106,13 +107,13 @@ Beispiele:
 
 Die Django URL-Konfiguration `urlpatterns` umfasst:
 
-    ```python
+    ````python
     urlpatterns = [
         path('admin/', admin.site.urls),                  # Admin interface
         path('api/', include('videoflix_app.api.urls')),  # Haupt API
         path('django-rq/', include('django_rq.urls')),    # Überwachung der Task-Queues
     ]
-    ```
+    ````
 
 ## API Endpunkte
 
