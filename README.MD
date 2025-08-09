@@ -47,7 +47,7 @@ It is especially useful for developers who want to understand the internal worki
         - Generating a thumbnail.
         - Creating HLS streams.
         """
-    ```
+  
 
 
 ## Installation

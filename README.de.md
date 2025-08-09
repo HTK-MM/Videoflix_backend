@@ -48,7 +48,6 @@ Sie eignet sich besonders für Entwickler, die das interne Verhalten des Codes v
         - Generating a thumbnail.
         - Creating HLS streams.
         """
-      ```
 
 ## Installation
 
