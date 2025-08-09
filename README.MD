@@ -38,7 +38,8 @@ This documentation has been generated from the **docstrings** included in the so
 It is especially useful for developers who want to understand the internal workings of the code and have a precise reference of what each part of the application does.
 
 **Example:**
-    ```python
+
+    ```bash
     def video_post_save(sender, instance, created, **kwargs):
         """
         Signal receiver that is called after a Video instance is saved.
@@ -47,7 +48,8 @@ It is especially useful for developers who want to understand the internal worki
         - Generating a thumbnail.
         - Creating HLS streams.
         """
-  
+    ```
+
 
 
 ## Installation
@@ -105,11 +107,11 @@ Example:
 The full Django `urlpatterns` configuration includes:
 
     ```python
-urlpatterns = [
-    path('admin/', admin.site.urls),                  # Admin interface
-    path('api/', include('videoflix_app.api.urls')),  # Main API
-    path('django-rq/', include('django_rq.urls')),    # Task queue monitoring
-]
+    urlpatterns = [
+        path('admin/', admin.site.urls),                  # Admin interface
+        path('api/', include('videoflix_app.api.urls')),  # Main API
+        path('django-rq/', include('django_rq.urls')),    # Task queue monitoring
+    ]
     ```
 
 ## API Endpoints
