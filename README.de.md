@@ -40,7 +40,7 @@ Sie eignet sich besonders für Entwickler, die das interne Verhalten des Codes v
 
 **Beispiel:**
 
-    ```bash
+    ```python
     def video_post_save(sender, instance, created, **kwargs):
         """
         Signal receiver that is called after a Video instance is saved.

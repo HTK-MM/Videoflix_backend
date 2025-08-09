@@ -39,7 +39,7 @@ It is especially useful for developers who want to understand the internal worki
 
 **Example:**
 
-    ```bash
+    ```python
     def video_post_save(sender, instance, created, **kwargs):
         """
         Signal receiver that is called after a Video instance is saved.
