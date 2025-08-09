@@ -31,6 +31,25 @@ Videoflix Backend is an API of a video streaming app, built with Django and Djan
 - **Whitenoise** – Serve static files in production
 - **Docker** – Containerization and environment management
 
+## Documentation
+
+The complete project documentation is located in the [`docs/`](./docs/) folder, in Markdown (`.md`) format.  
+This documentation has been generated from the **docstrings** included in the source code, so it contains a description of each function, its parameters, and its purpose within the project.  
+It is especially useful for developers who want to understand the internal workings of the code and have a precise reference of what each part of the application does.
+
+**Example:**
+    ```python
+    def video_post_save(sender, instance, created, **kwargs):
+        """
+        Signal receiver that is called after a Video instance is saved.
+        If the Video instance is newly created, it performs tasks such as:
+        - Converting the video file to different resolutions.
+        - Generating a thumbnail.
+        - Creating HLS streams.
+        """
+    ```
+
+
 ## Installation
 
 This project uses Docker. Follow these steps to get everything running locally:

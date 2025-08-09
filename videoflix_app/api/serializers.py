@@ -16,6 +16,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
         read_only_fields = ['username', 'email'] 
         
     def update(self, instance, validated_data):        
+        """   Updates an existing CustomUser instance with the given validated data.
+        This serializer's update method is called by the ModelViewSet's update method.
+        The update method of ModelViewSet gets the instance to be updated from the queryset, and then calls this serializer's update method to update the instance.
+        The validated data is passed as argument to this method.
+        This method iterates over the validated data, sets the attributes of the instance with the corresponding values, saves the instance and returns it."""
+        
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
@@ -29,25 +35,30 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         fields = ['email', 'password']
 
   def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)      
-        self.fields.pop('username', None)  
+    """ - Removes username from the validated data since we are using email
+        - instead.  """
+
+    super().__init__(*args, **kwargs)      
+    self.fields.pop('username', None)  
   
   def validate(self, attrs):  
-            email = attrs.get('email')         
-            password = attrs.get('password')        
-            user = CustomUser.objects.filter(email=email).first()
-            if user is None:
-                    raise serializers.ValidationError('Email address is not registered')                
-            authenticated_user = authenticate(username=user.username, password=password)
-            if not authenticated_user:
-                    raise serializers.ValidationError('Invalid emailaddress or password')
-            if not authenticated_user.is_active:
-                    raise serializers.ValidationError('User is not active')            
-            attrs['username'] = user.username            
-            data = super().validate(attrs )
-            data['user_id'] = user.id
-            data['email'] = user.email          
-            return data
+        """ Validates the user credentials and populates the validated_data dictionary. """
+        
+        email = attrs.get('email')         
+        password = attrs.get('password')        
+        user = CustomUser.objects.filter(email=email).first()
+        if user is None:
+                raise serializers.ValidationError('Email address is not registered')                
+        authenticated_user = authenticate(username=user.username, password=password)
+        if not authenticated_user:
+                raise serializers.ValidationError('Invalid emailaddress or password')
+        if not authenticated_user.is_active:
+                raise serializers.ValidationError('User is not active')            
+        attrs['username'] = user.username            
+        data = super().validate(attrs )
+        data['user_id'] = user.id
+        data['email'] = user.email          
+        return data
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -61,20 +72,36 @@ class RegistrationSerializer(serializers.ModelSerializer):
         }
 
     def validate_password(self, value):
+        """Validates the given password by checking if it is at least 8 characters long.
+        If the password is not valid, raises a serializers.ValidationError with an appropriate error message.
+        Otherwise, returns the password."""
+        
         if len(value) < 8:
             raise serializers.ValidationError('Password must be at least 8 characters long.')
         return value
-    def validate_email(self, value):
+    def validate_email(self, value):  
+        """   Checks if an email already exists in the database.
+        If it does, raises a serializers.ValidationError with the message 'Email already exists'.
+        Otherwise, returns the email value. """
+
         if CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError('Email already exists')
         return value
     
-    def validate(self, data):     
+    def validate(self, data):             
+        """Validate the given data. 
+        Checks that the given password and confirmed password match, and raises a ValidationError if they do not."""
+        
         if data['password'] != data['confirmed_password']:
             raise serializers.ValidationError({'password': 'Passwords must match'})
         return data
     
     def create(self, validated_data): 
+        """ Creates a new CustomUser instance with the given validated data.        
+        The email address is used to create a username (by stripping the domain part).
+        The user is created with the username and email address. The password is set to the given password.
+        The created user is then returned. """
+        
         email = validated_data['email']
         password = validated_data['password']
         username = email.split('@')[0]        
@@ -84,6 +111,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
     def validate_email(self, value):       
+        """Validates the given email address by checking if it already exists in the database.
+        If it does, raises a serializers.ValidationError with the message 'Email already exists'.
+        Otherwise, returns the email value."""
         return value
 
 class PasswordResetConfirmSerializer(serializers.Serializer):   
@@ -91,6 +121,12 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     confirm_password  = serializers.CharField()
 
     def validate(self, data):        
+        """ Validates the data for a password reset confirmation.        
+        -   Validates that the token and uid are present in the context. Checks that the new password and confirmed password match.
+        -   Decodes the uidb64 and checks that the user exists. Then checks that the token is valid for the given user.   
+        If any of the checks fail, raises a serializers.ValidationError with an appropriate error message.
+        If all the checks succeed, returns the validated data with the user instance included."""
+        
         uidb64 = self.context.get('uidb64')
         token = self.context.get('token')
         if not uidb64 or not token:
@@ -111,6 +147,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         return data
 
     def save(self):
+        """Saves a new password for the user given in the validated data.
+        Retrieves the user from the validated data, sets their password to the new password given in the validated data, and saves the user."""
         user = self.validated_data['user']
         user.set_password(self.validated_data['new_password'])
         user.save()
@@ -136,6 +174,7 @@ class VideoSerializer(serializers.ModelSerializer):
         read_only_fields = ['thumbnail']  
                
     def get_video_base_url(self, obj):        
+        """Returns the base URL of the video file without the file extension. If the video file does not exist, returns None."""
         if obj.video_file:
             url = obj.video_file.url
             if url.endswith('.mp4'):
@@ -144,6 +183,9 @@ class VideoSerializer(serializers.ModelSerializer):
         return None    
     
     def get_thumbnail_url(self, obj):        
+        """Return the absolute url of the video thumbnail image.
+        If the object doesn't have a thumbnail, return None.    """
+
         request = self.context.get('request')
         if obj.thumbnail and request:
             return request.build_absolute_uri(obj.thumbnail.url)
@@ -158,6 +200,10 @@ class VideoListSerializer(serializers.ModelSerializer):
         read_only_fields = ['thumbnail']  
         
     def get_thumbnail_url(self, obj):        
+        """Retrieve the absolute URL of the video's thumbnail image.
+        This method calls the `get_thumbnail_url` method from `VideoSerializer`
+        to obtain the URL. The method requires an object to be passed as an argument.     """
+
         return VideoSerializer.get_thumbnail_url(self, obj)
  
 class WatchlistEntrySerializer(serializers.ModelSerializer):

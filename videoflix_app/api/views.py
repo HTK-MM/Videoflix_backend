@@ -34,14 +34,18 @@ class CustomUserView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsOwnerProfile]
     
     def get_queryset(self):
+        """ Returns a queryset of CustomUser objects filtered by the currently authenticated user. """
         return CustomUser.objects.filter(id=self.request.user.id)
     def get_object(self):
+        """ Returns the currently authenticated user. """
         return self.request.user
     def destroy(self, request, *args, **kwargs):
+        """ Attempts to delete the currently authenticated user's account. """            
         return Response({'detail': 'Deleting account is not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
     @action(detail=False, methods=['get', 'put', 'patch'], url_path='me')
     def me(self, request):
+        """ Return the user's profile or update the user's profile.      """            
         user = request.user
         if request.method == 'GET':
             serializer = self.get_serializer(user)
@@ -58,6 +62,8 @@ class RegistrationView(APIView):
     serializer_class = RegistrationSerializer
     
     def post(self, request):
+        """ Creates a new user account and sends an activation email to the user. 
+        Return A DRF response object with a 201 Created status code and a JSON object if the registration is successful.  """
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
@@ -75,12 +81,15 @@ class RegistrationView(APIView):
 class ActivateUserView(APIView):
     permission_classes = [AllowAny]
     def get(self, request, uidb64=None, token=None):              
+        """ Handles a GET request to the user activation endpoint. Returns: A JSON response with the result of the activation """            
         if not uidb64 or not token:
             return Response({'error': 'UID and token are required'}, status=status.HTTP_400_BAD_REQUEST)
         response = self.activate_user(uidb64, token)               
         return response
         
     def post(self, request, uidb64=None, token=None ):
+        """ Handles a POST request to the user activation endpoint.        
+        Returns:    Response: A JSON response with the result of the activation  """            
         uidb64 = request.data.get('uid') or uidb64
         token = request.data.get('token') or token     
         if not uidb64 or not token:
@@ -88,6 +97,7 @@ class ActivateUserView(APIView):
         return self.activate_user(uidb64, token)
     
     def activate_user(self, uidb64, token):        
+        """ Activate a user's account given a valid base64 encoded user id and a valid password reset token. """        
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
             user = User.objects.get(pk=uid)
@@ -110,28 +120,27 @@ class CookieTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer  
         
     def post(self, request, *args, **kwargs):       
+        """ Set the access and refresh tokens as httponly cookies in the response. The response data is updated to include a "detail" key with the message "Login successful", and a "user" key with the user's id and username. """
         response = super().post(request, *args, **kwargs)
         refresh = response.data.get("refresh")
-        access = response.data.get("access")
-        
+        access = response.data.get("access")        
         is_secure = not settings.DEBUG 
+        
         response.set_cookie( 
             key="access_token", 
             value = access,
             httponly=True,
             samesite="Lax",            
             secure=is_secure,
-            path="/",     
-            )
-        
+            path="/", )       
+         
         response.set_cookie(
             key="refresh_token",
             value = refresh,
             httponly=True,
             samesite="Lax",             
             secure=is_secure,    
-            path="/",            
-            )
+            path="/", )
             
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -142,6 +151,7 @@ class CookieTokenObtainPairView(TokenObtainPairView):
 class CookieTokenRefreshView(TokenRefreshView):
     permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
+        """Refresh an access token given a valid refresh token cookie.    """
         refresh_token = request.COOKIES.get("refresh_token")        
         if refresh_token is None:
             return Response({"error": "Refresh token not found in cookies"}, status=status.HTTP_400_BAD_REQUEST)        
@@ -159,14 +169,14 @@ class CookieTokenRefreshView(TokenRefreshView):
             httponly=True,
             secure=is_secure,
             samesite="Lax",
-            path="/",    
-        )
+            path="/",  )
         return response
     
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class LogoutView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
+        """ Returns: response: A JSON response with the result of the logout      """       
         refresh_token = request.COOKIES.get('refresh_token')
         if not refresh_token:
             return Response(
@@ -187,6 +197,7 @@ class LogoutView(APIView):
 class CheckLoginOrRegisterView(APIView):
     permission_classes = [permissions.AllowAny]
     def post(self, request):
+        """ Checks if the given email exists in the system and returns a JSON response accordingly. Returns: A JSON response with the result of the check   """            
         email = request.data.get('email')
         if not email:
             return Response({'detail': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -200,13 +211,13 @@ class PasswordResetRequestView(APIView):
     permission_classes = [AllowAny]
     serializer_class = PasswordResetRequestSerializer
     def post(self, request):
+        """ Handles a POST request to the password reset request endpoint. Returns: A JSON response with the result of the password reset request """
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user = User.objects.filter(email=serializer.validated_data['email']).first()
             if user:
                 queue = get_queue('default')
                 queue.enqueue(send_resetPW_email_task, user.id)
-
             return Response(
                 {'detail': 'An email has been sent to reset your password.'},
                 status=status.HTTP_200_OK )
@@ -217,6 +228,7 @@ class PasswordResetConfirmView(APIView):
     serializer_class = PasswordResetConfirmSerializer    
             
     def post(self, request, uidb64, token):
+        """ Handles a POST request to the password reset confirm endpoint. Returns: A JSON response with the result of the password reset confirmation      """            
         serializer = self.serializer_class(data=request.data,context={'uidb64': uidb64, 'token': token})          
         if serializer.is_valid():
             serializer.save()
@@ -232,6 +244,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
     
     def create(self, request, *args, **kwargs):
+        """ Creates a new category."""            
         if not request.user.is_staff:
             return Response({"error": "Only admins can create categories."}, status=status.HTTP_403_FORBIDDEN)
         serializer = self.get_serializer(data=request.data)
@@ -243,6 +256,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
   
     @action(detail=False, methods=['get'], url_path='with_videos')
     def categories_with_videos(self, request):
+        """ Returns a list of categories and their associated videos.  """            
         categories = self.get_queryset()
         data = []
         for category in categories:
@@ -250,8 +264,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
             videos_serializer = VideoSerializer(videos, many=True)
             data.append({
                 'category': category.name,
-               'videos': videos_serializer.data
-            })
+               'videos': videos_serializer.data })
         return Response(data)
   
 class VideoViewSet(viewsets.ModelViewSet):
@@ -262,11 +275,14 @@ class VideoViewSet(viewsets.ModelViewSet):
     parser_classes = (MultiPartParser, FormParser)
     
     def get_serializer_class(self):
+        """  Returns the serializer class to use based on the current action. """        
         if self.action == 'list':
             return VideoListSerializer
         return VideoSerializer
 
     def create(self, request, *args, **kwargs):        
+        """ Handles the creation of a new video entry. The request should contain the title, description, duration, category ID, video file, and is_featured flag.
+        The response should contain the message 'Video created successfully' and the newly created video should exist in the database."""
         serializer = self.get_serializer(data=request.data)        
         if serializer.is_valid(raise_exception = True):
             serializer.save()                   
@@ -276,27 +292,31 @@ class VideoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='new')
     def new_video(self, request):
+        """ Returns the most recently created video."""
         video =self.get_queryset().order_by('-created_at').first()         
         serializer = self.get_serializer(video)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='new_videos')
     def new_videos(self, request):
+        """ Returns a list of the 10 most recently created videos."""        
         videos = self.get_queryset().order_by('-created_at')[:10]        
         serializer = self.get_serializer(videos, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='featured')
     def featured(self, request):
+        """ Returns a list of featured videos. """
         videos = self.get_queryset().filter(is_featured=True)        
         serializer = self.get_serializer(videos, many=True)
         return Response(serializer.data)
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([CookieJWTAuthentication, SessionAuthentication])
 def serve_hls_manifest(request, movie_id, resolution):
+    """ Serves the HLS manifest file for a specific video.    
+    Returns:    - FileResponse: The HLS manifest file as a response.   """
     file_path = os.path.join(settings.MEDIA_ROOT, 'videos', str(movie_id), resolution, 'index.m3u8')
     if not os.path.exists(file_path):
         raise Http404("Video or Manifest file not found")
@@ -306,11 +326,12 @@ def serve_hls_manifest(request, movie_id, resolution):
 @permission_classes([IsAuthenticated])
 @authentication_classes([CookieJWTAuthentication, SessionAuthentication])
 def serve_hls_segment(request, movie_id, resolution, segment):
+    """ Serves an HLS segment file for a specific video.    
+    Returns: - FileResponse: The HLS segment file as a response.   """    
     file_path = os.path.join(settings.MEDIA_ROOT,'videos', str(movie_id), resolution, segment)
     if not os.path.exists(file_path):
         raise Http404("Video or Segment file not found")
     return FileResponse(open(file_path, 'rb'), content_type='video/MP2T')
-
     
 class WatchlistViewSet(viewsets.ModelViewSet):
     serializer_class = WatchlistSerializer
@@ -318,9 +339,11 @@ class WatchlistViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsOwnerProfile]
 
     def get_queryset(self):     
+        """ Returns a queryset of Watchlist objects for the authenticated user. """
         return Watchlist.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
+        """ Create a new watchlist entry for the user.  """        
         serializer.save(user=self.request.user)
 
 class WatchlistEntryViewSet(viewsets.ModelViewSet):
@@ -329,9 +352,11 @@ class WatchlistEntryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsOwnerProfile]
 
     def get_queryset(self):       
+        """Returns a queryset of WatchlistEntry objects for the authenticated user. """
         return WatchlistEntry.objects.filter(watchlist__user=self.request.user)
 
     def perform_create(self, serializer):   
+        """Create a new watchlistEntry for the user.   """        
         watchlist, _ = Watchlist.objects.get_or_create(user=self.request.user)    
         video = serializer.validated_data.get('video')
         if WatchlistEntry.objects.filter(watchlist=watchlist, video=video).exists():
@@ -340,14 +365,13 @@ class WatchlistEntryViewSet(viewsets.ModelViewSet):
         
     @action(detail=False, methods=['delete'], url_path='remove/(?P<video_id>[^/.]+)')
     def remove_video(self, request, video_id=None):
+        """ Removes a video from the user's watchlist.     """            
         watchlist = Watchlist.objects.filter(user=request.user).first()
         if not watchlist:
             return Response({"error": "Watchlist not found"}, status=status.HTTP_404_NOT_FOUND)
-
         entry = WatchlistEntry.objects.filter(watchlist=watchlist, video_id=video_id).first()
         if not entry:
             return Response({"error": "Video not in watchlist"}, status=status.HTTP_404_NOT_FOUND)
-
         entry.delete()
         return Response({"message": "Video removed from watchlist"}, status=status.HTTP_204_NO_CONTENT)
 
@@ -357,13 +381,16 @@ class WatchHistoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsOwnerProfile]
 
     def get_queryset(self):       
+        """Returns a queryset of WatchHistory objects for the authenticated user."""
         return WatchHistory.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
+        """ Create a new watch history entry for the user. """        
         serializer.save(user=self.request.user)
 
     @action(detail=False, methods=['post'],url_path='save-progress')
     def save_progress(self, request):
+        """Saves the user's progress for a video."""        
         video_id = request.data.get('video_id')
         seconds = request.data.get('progress_seconds')
         if not video_id or seconds is None:
@@ -379,6 +406,7 @@ class WatchHistoryViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='get-progress/(?P<video_id>[^/.]+)')
     def get_progress(self, request, video_id=None):
+        """Returns the user's progress for a video in seconds."""
         history = WatchHistory.objects.filter(user=request.user, video_id=video_id).first()
         if not history:
             return Response({"progress_seconds": 0}) 

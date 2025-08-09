@@ -18,11 +18,25 @@ Check if the request has permission to proceed.
 This class is a custom permission class in Django Rest Framework that checks if a user has ownership or permission to access a specific object.
 
 ### def has_permission(self, request, view):
-    Return `True` if permission is granted, `False` otherwise.
-    This method checks if the user is authenticated.
+Check if the request has permission to proceed. Grants permission to all authenticated users.
+    **Args:**
+        request (Request): The HTTP request object.
+        view (View): The view that is being accessed.
+    **Returns:**
+        bool: True if the request has permission, False otherwise.
 
 ### def has_object_permission(self, request, view, obj):
-CustomUser, Video, Watchlist and WatchlistEntry have an user attribute which is a foreign key to CustomUser.
-    This method checks if the object's user matches the request's user.
-    If the object doesn't have an user attribute, it will return False.
-    If any Exception is thrown during the check, it will return False.
+Return `True` if permission is granted, `False` otherwise.
+This method checks if the object is associated with the user making the request.
+- If the object is a user, it checks if the object is the same as the user making the request.
+- If the object has a `watchlist` attribute and the `watchlist` has a `user` attribute, it checks if the user associated with the `watchlist` is the same as the user making the request. 
+- If the object has a `user` attribute, it checks if the user associated with the object is the same as the user making the request.
+- If any Exception is thrown during the check, it will return False.
+        **Param Request:**
+            The request object
+        **Param View:** 
+            The view that is being accessed
+        **Param obj:**
+            The object that is being accessed
+        **Returns:**
+            bool: True if permission is granted, False otherwise. 
